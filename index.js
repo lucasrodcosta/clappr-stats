@@ -43,6 +43,7 @@ export default class ClapprStats extends ContainerPlugin {
     this.listenTo(this.container, Events.CONTAINER_PLAYBACKDVRSTATECHANGED, (dvrInUse) => {dvrInUse && this._inc('dvrUsage')})
     this.listenTo(this.container.playback, Events.PLAYBACK_PROGRESS, this.onProgress)
     this.listenTo(this.container.playback, Events.PLAYBACK_TIMEUPDATE, this.onTimeUpdate)
+    this.listenTo(this.container.playback, Events.PLAYBACK_FRAGMENT_LOADED, this.onFragmentLoad)
   }
 
   onBitrate(newBitrate) {
@@ -58,6 +59,13 @@ export default class ClapprStats extends ContainerPlugin {
     this._metrics.extra.bitratesHistory.push({start: this._now(), bitrate: bitrate})
 
     this._inc('changeLevel')
+  }
+
+  onFragmentLoad(data) {
+    var time = (data.stats.tload - data.stats.trequest) / 1000
+    var bandwidthBps = 8 * data.stats.loaded / time
+    var bandwidthKbps = bandwidthBps / 1000
+    this._metrics.extra.bandwidth = bandwidthKbps
   }
 
   stopReporting() {
@@ -153,7 +161,7 @@ export default class ClapprStats extends ContainerPlugin {
       extra: {
         playbackName: '', playbackType: '', bitratesHistory: [], bitrateWeightedMean: 0,
         bitrateMostUsed: 0, buffersize: 0, watchHistory: [], watchedPercentage: 0,
-        bufferingPercentage: 0
+        bufferingPercentage: 0, bandwidth: 0
       }
     }
   }
